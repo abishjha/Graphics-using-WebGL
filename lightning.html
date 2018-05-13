@@ -1,0 +1,131 @@
+<!DOCTYPE html>
+<html>
+
+<script id="vertex-shader" type="x-shader/x-vertex">
+
+attribute vec4 vPosition;
+attribute vec4 vNormal;
+
+varying vec4 fColor;
+
+
+uniform vec4 ambientProduct, diffuseProduct, specularProduct;
+uniform mat4 modelViewMatrix;
+uniform mat4 projectionMatrix;
+uniform vec4 lightPosition;
+uniform float shininess;
+uniform mat3 normalMatrix;
+
+
+void
+main()
+{
+    vec3 pos = (modelViewMatrix * vPosition).xyz;
+    vec3 light = lightPosition.xyz;
+    vec3 L;
+    
+    // check for directional light
+    
+    if(lightPosition.w == 0.0) L = normalize(lightPosition.xyz);
+    else L = normalize( lightPosition.xyz - pos );
+
+
+	
+    vec3 E = -normalize( pos );
+    vec3 H = normalize( L + E );
+
+    // Transform vertex normal into eye coordinates
+    
+       
+    vec3 N = normalize( normalMatrix*vNormal.xyz);
+
+    // Compute terms in the illumination equation
+    vec4 ambient = ambientProduct;
+
+    float Kd = max( dot(L, N), 0.0 );
+    vec4  diffuse = Kd*diffuseProduct;
+
+    float Ks = pow( max(dot(N, H), 0.0), shininess );
+    vec4  specular = Ks * specularProduct;
+    
+    if( dot(L, N) < 0.0 ) {
+	specular = vec4(0.0, 0.0, 0.0, 1.0);
+    } 
+
+    gl_Position = projectionMatrix * modelViewMatrix * vPosition;
+    
+    fColor = ambient + diffuse +specular;
+    
+    fColor.a = 1.0;
+}
+</script>
+
+<script id="fragment-shader" type="x-shader/x-fragment">
+
+precision mediump float;
+
+varying vec4 fColor;
+
+void
+main()
+{
+
+    gl_FragColor = fColor;
+
+}
+</script>
+
+<p> </p>
+<label for="ambient">Ambient</label>
+<input type="checkbox" id="ambient" checked/>
+
+<label for="diffuse">Diffuse</label>
+<input type="checkbox" id="diffuse" checked/>
+
+<label for="specular">Specular</label>
+<input type="checkbox" id="specular" checked/>
+
+<p></p>
+
+<label for="materialAmbient">Material Ambient Color</label>
+<input id="materialAmbient" class="jscolor {onFineChange:'updateMaterialAmbient(this)'}"/>
+
+<label for="materialDiffuse">Material Diffuse Color</label>
+<input id="materialDiffuse" class="jscolor {onFineChange:'updateMaterialDiffuse(this)'}"/>
+
+<p></p>
+
+<label for="lightAmbient">Light Ambient Color</label>
+<input id="lightAmbient" class="jscolor {onFineChange:'updateLightAmbient(this)'}"/>
+
+<label for="lightDiffuse">Light Diffuse Color</label>
+<input id="lightDiffuse" class="jscolor {onFineChange:'updateLightDiffuse(this)'}"/>
+
+<p></p>
+
+<label for="materialSpecular">Material Specular Color</label>
+<input id="materialSpecular" class="jscolor {onFineChange:'updateMaterialSpecular(this)'}"/>
+
+<label for="lightSpecular">Light Specular Color</label>
+<input id="lightSpecular" class="jscolor {onFineChange:'updateLightSpecular(this)'}"/>
+
+<p></p>
+
+<script type="text/javascript" src="webgl-utils.js"></script>
+<script type="text/javascript" src="initShaders.js"></script>
+<script type="text/javascript" src="MV.js"></script>
+<script type="text/javascript" src="jscolor.js"></script>
+<script type="text/javascript" src="lightning.js"></script>
+
+<body>
+<canvas id="gl-canvas" width="512" height="512">
+Oops ... your browser doesn't support the HTML5 canvas element
+</canvas>
+
+<p></p>
+use 'X', 'Y', 'Z' to INCREMENT the x, y, and z coordinate of the light position </br>
+use 'x', 'y', 'z' to DECREMENT the x, y, and z coordinate of the light position </br>
+use 'S' to INCREMENT shininess by 1 and 's' to DECREMENT by 1
+<p></p>
+</body>
+</html>
